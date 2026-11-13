@@ -169,7 +169,7 @@
 
   .status-bar {
     display: none;
-    margin-top: 10px;
+    flex: 1;
     padding: 8px 10px;
     border-radius: 6px;
     font-size: 12px;
@@ -180,48 +180,37 @@
   .status-bar.error { display: block; background: #fdf0ee; color: #c0392b; border: 1px solid #f0b8b0; }
   .status-bar.warning { display: block; background: #fefae8; color: #b8860b; border: 1px solid #e8d888; }
 
-  .run-row { display: flex; gap: 8px; margin-top: 12px; }
+  .run-row { display: flex; gap: 8px; margin-top: 10px; }
   #runBtn { flex: 1; }
 
-  .progress-bar-wrap { height: 4px; background: #e0e0e0; border-radius: 2px; margin-top: 8px; display: none; }
+  .progress-bar-wrap { height: 4px; background: #e0e0e0; border-radius: 2px; margin-bottom: 8px; display: none; }
   .progress-bar { height: 4px; background: #1a6e9f; border-radius: 2px; transition: width 0.3s; width: 0%; }
-
-  .divider { border: none; border-top: 1px solid #e8e8e8; margin: 14px 0; }
-
-  .disable-panel-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-  }
-  .disable-panel-header label { font-size: 11px; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.04em; margin: 0; }
 
   .section-checks {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 4px 12px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
   }
   .section-check-item {
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: 11px;
+    margin: 0;
+    font-size: 12px;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
     color: #333;
     cursor: pointer;
     user-select: none;
   }
   .section-check-item input[type="checkbox"] { cursor: pointer; accent-color: #1a6e9f; }
 
-  .disable-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  #disableBtn { flex: 1; }
-
-  .progress-bar-wrap.disable { margin-top: 6px; }
-
   .log-clear { font-size: 11px; color: #1a6e9f; cursor: pointer; text-transform: none; letter-spacing: normal; font-weight: 500; }
   .log-clear:hover { text-decoration: underline; }
   .log-empty { font-size: 11px; color: #999; padding: 6px 0; }
-  .log-items { max-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+  .log-items { max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
   .log-item { background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 6px 8px; font-size: 11px; }
   .log-main { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
   .log-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; padding: 1px 6px; border-radius: 10px; background: #e8e8e8; color: #555; flex-shrink: 0; }
@@ -241,6 +230,59 @@
   .img-selects .block-section-select:disabled { cursor: not-allowed; color: #999; }
   #imgZipBtn { flex: 1; }
 
+  .top { position: sticky; top: 0; z-index: 10; background: #f5f5f5; }
+
+  .tabs { display: flex; background: #fff; border-bottom: 1px solid #e0e0e0; }
+  .tab {
+    flex: 1;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: #666;
+    font-weight: 600;
+  }
+  .tab:hover { background: #f5f5f5; color: #1a1a1a; }
+  .tab:active { transform: none; }
+  .tab[aria-selected="true"] { color: #1a6e9f; border-bottom-color: #1a6e9f; }
+
+  .job { padding: 10px 16px 0; }
+  .job:empty, .job.idle { display: none; }
+  .status-row { display: flex; gap: 8px; align-items: flex-start; }
+  #stopBtn { flex-shrink: 0; }
+
+  .tab-panel[hidden] { display: none; }
+
+  .panel-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .panel-head label { margin: 0; }
+
+  .btn-row button.grow { flex: 1; }
+
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #1a1a1a;
+    text-transform: none;
+    letter-spacing: normal;
+    cursor: pointer;
+  }
+  .check-row input { accent-color: #1a6e9f; cursor: pointer; }
+  .hint { font-size: 11px; color: #777; line-height: 1.45; margin-top: 4px; }
+
+  .danger-zone { margin-top: 16px; padding: 10px 12px; border: 1px solid #f0b8b0; border-radius: 6px; background: #fff; }
+  .danger-zone .hint { margin: 0 0 10px; }
+  .danger-zone button { width: 100%; }
+
+  .block-item { scroll-margin-top: 150px; }
+
+  body.busy .action { opacity: 0.45; pointer-events: none; }
+
   .not-on-cms {
     padding: 24px 20px;
     text-align: center;
@@ -256,87 +298,96 @@
   <span id="pageStatus">checking...</span>
 </div>
 
-<div id="mainContent" class="body" style="display:none">
+<div id="mainContent" style="display:none">
 
-  <div id="disablePanel">
-    <div class="disable-panel-header">
-      <label>Disable existing blocks</label>
+  <div class="top">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="add" aria-selected="true">Add blocks</button>
+      <button class="tab" role="tab" data-tab="manage" aria-selected="false">Manage</button>
+      <button class="tab" role="tab" data-tab="images" aria-selected="false">Images</button>
+      <button class="tab" role="tab" data-tab="log" aria-selected="false">Log</button>
+    </div>
+    <div class="job idle" id="jobArea">
+      <div class="progress-bar-wrap" id="progressWrap">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+      <div class="status-row">
+        <div class="status-bar" id="statusBar"></div>
+        <button id="stopBtn" class="danger" style="display:none">Stop</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="tab-panel body" id="panel-add" role="tabpanel">
+    <div class="field">
+      <label for="htmlInput">Paste full page HTML</label>
+      <textarea id="htmlInput" placeholder="Paste your full HTML here — each .container or .container-fluid becomes a separate block..."></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button id="parseBtn" class="primary action">Parse blocks</button>
+      <button id="clearBtn" class="action">Clear</button>
+    </div>
+
+    <div id="blockList">
+      <div class="blocks-header">
+        <span>Blocks found</span>
+        <small id="blockCount"></small>
+      </div>
+      <div id="blockItems"></div>
+
+      <label class="check-row"><input type="checkbox" id="disableFirst" checked> Disable existing blocks in these sections first</label>
+      <p class="hint">Old blocks stay on the page, disabled and moved to the bottom. Check the live page, then delete them from the Manage tab.</p>
+
+      <div class="run-row">
+        <button id="runBtn" class="primary action" disabled>Run all → CMS</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="tab-panel body" id="panel-manage" role="tabpanel" hidden>
+    <div class="panel-head">
+      <label>Sections</label>
     </div>
     <div class="section-checks" id="sectionChecks"></div>
-    <div class="disable-row">
-      <button id="disableBtn" class="primary">Disable existing</button>
-      <button id="enableBtn">Enable existing</button>
-      <button id="deleteBtn" class="danger">Delete live</button>
-      <button id="exportBtn">Export HTML</button>
-      <button id="disableStopBtn" class="danger" style="display:none">Stop</button>
+    <div class="btn-row">
+      <button id="disableBtn" class="action grow">Disable blocks</button>
+      <button id="enableBtn" class="action grow">Enable blocks</button>
     </div>
-    <div class="progress-bar-wrap disable" id="disableProgressWrap">
-      <div class="progress-bar" id="disableProgressBar"></div>
+    <div class="btn-row">
+      <button id="exportBtn" class="action grow">Export HTML</button>
     </div>
-    <div class="status-bar" id="disableStatusBar"></div>
-  </div>
-
-  <hr class="divider">
-
-  <div id="logPanel">
-    <div class="disable-panel-header">
-      <label>Activity log</label>
-      <span class="log-clear" id="logClearBtn">Clear</span>
+    <div class="danger-zone">
+      <div class="panel-head">
+        <label>Clean up</label>
+      </div>
+      <p class="hint">Permanently deletes every disabled block in the selected sections. Each block's HTML is kept in the Log tab so you can restore it.</p>
+      <button id="deleteBtn" class="danger action">Delete disabled blocks</button>
     </div>
-    <div id="logEmpty" class="log-empty">No actions yet.</div>
-    <div id="logItems" class="log-items"></div>
-  </div>
+  </section>
 
-  <hr class="divider">
-
-  <div id="imagesPanel">
-    <div class="disable-panel-header">
+  <section class="tab-panel body" id="panel-images" role="tabpanel" hidden>
+    <div class="panel-head">
       <label>Download block images</label>
-      <span class="log-clear" id="imgRefreshBtn">Refresh</span>
+      <span class="log-clear action" id="imgRefreshBtn">Refresh</span>
     </div>
     <div class="img-selects">
       <select id="imgSectionSelect" class="block-section-select"></select>
       <select id="imgBlockSelect" class="block-section-select" disabled></select>
     </div>
-    <div class="disable-row">
-      <button id="imgZipBtn" class="primary" disabled>Download images as ZIP</button>
+    <div class="btn-row">
+      <button id="imgZipBtn" class="primary action" disabled>Download images as ZIP</button>
     </div>
-    <div class="progress-bar-wrap disable" id="imgProgressWrap">
-      <div class="progress-bar" id="imgProgressBar"></div>
+  </section>
+
+  <section class="tab-panel body" id="panel-log" role="tabpanel" hidden>
+    <div class="panel-head">
+      <label>Activity log</label>
+      <span class="log-clear action" id="logClearBtn">Clear</span>
     </div>
-    <div class="status-bar" id="imgStatusBar"></div>
-  </div>
-
-  <hr class="divider">
-
-  <div class="field">
-    <label>Paste full page HTML</label>
-    <textarea id="htmlInput" placeholder="Paste your full HTML here — each .container or .container-fluid becomes a separate block..."></textarea>
-  </div>
-
-  <div class="btn-row">
-    <button id="parseBtn" class="primary">Parse blocks</button>
-    <button id="clearBtn">Clear</button>
-  </div>
-
-  <div id="blockList">
-    <div class="blocks-header">
-      <span>Blocks found</span>
-      <small id="blockCount"></small>
-    </div>
-    <div id="blockItems"></div>
-
-    <div class="progress-bar-wrap" id="progressWrap">
-      <div class="progress-bar" id="progressBar"></div>
-    </div>
-
-    <div class="run-row">
-      <button id="runBtn" class="primary" disabled>Run all → CMS</button>
-      <button id="stopBtn" class="danger" style="display:none">Stop</button>
-    </div>
-  </div>
-
-  <div class="status-bar" id="statusBar"></div>
+    <div id="logEmpty" class="log-empty">No actions yet.</div>
+    <div id="logItems" class="log-items"></div>
+  </section>
 
 </div>
 

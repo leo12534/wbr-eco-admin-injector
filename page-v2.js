@@ -97,12 +97,12 @@
     return { ...result, name };
   }
 
-  async function deleteFirstLive(sectionName) {
+  async function deleteFirstDisabled(sectionName) {
     const found = region(sectionName);
     if (found.error) return { success: false, error: found.error };
     const { vm, region: r } = found;
-    const view = r.views.find(v => !isDisabled(v));
-    if (!view) return { success: false, error: 'No live blocks found' };
+    const view = r.views.find(isDisabled);
+    if (!view) return { success: false, error: 'No disabled blocks found' };
     const { id } = view;
     const name = view.name || view.file || '';
     const html = view.html || '';
@@ -139,5 +139,5 @@
     if (vm) vm.$data.modal = false;
   }
 
-  window.ecoV2 = { active, views, add, setDisabled, deleteFirstLive, sortLiveFirst, closeModal };
+  window.ecoV2 = { active, views, add, setDisabled, deleteFirstDisabled, sortLiveFirst, closeModal };
 })();
