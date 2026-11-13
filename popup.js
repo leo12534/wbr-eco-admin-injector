@@ -50,17 +50,12 @@ disableBtn.addEventListener('click', async () => {
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-  const result = await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    world: 'MAIN',
-    func: getBlockCountsForSections,
-    args: [checked]
-  });
+  const result = await runInPage(tab.id, getBlockCountsForSections, [checked]);
   const counts = result[0]?.result || {};
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   if (total === 0) {
-    setDisableStatus('No existing blocks found in selected sections.', 'warning');
+    setDisableStatus('No existing blocks found in selected sections. In the new editor, open the page\'s Regions tab first.', 'warning');
     disableRunning = false;
     disableBtn.disabled = false;
     enableBtn.disabled = false;
@@ -77,12 +72,7 @@ disableBtn.addEventListener('click', async () => {
     const count = counts[section] || 0;
     for (let i = 0; i < count; i++) {
       if (disableStopRequested) break;
-      const res = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        world: 'MAIN',
-        func: disableBlockAtIndex,
-        args: [section, i]
-      });
+      const res = await runInPage(tab.id, disableBlockAtIndex, [section, i]);
       const outcome = res[0]?.result;
       if (outcome?.success) { done++; await logAction({ action: 'disable', section, name: outcome.name }); } else { errors++; }
       updateDisableProgress(done + errors, total);
@@ -121,17 +111,12 @@ enableBtn.addEventListener('click', async () => {
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-  const result = await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    world: 'MAIN',
-    func: getBlockCountsForSections,
-    args: [checked]
-  });
+  const result = await runInPage(tab.id, getBlockCountsForSections, [checked]);
   const counts = result[0]?.result || {};
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   if (total === 0) {
-    setDisableStatus('No existing blocks found in selected sections.', 'warning');
+    setDisableStatus('No existing blocks found in selected sections. In the new editor, open the page\'s Regions tab first.', 'warning');
     disableRunning = false;
     disableBtn.disabled = false;
     enableBtn.disabled = false;
@@ -148,12 +133,7 @@ enableBtn.addEventListener('click', async () => {
     const count = counts[section] || 0;
     for (let i = 0; i < count; i++) {
       if (disableStopRequested) break;
-      const res = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        world: 'MAIN',
-        func: enableBlockAtIndex,
-        args: [section, i]
-      });
+      const res = await runInPage(tab.id, enableBlockAtIndex, [section, i]);
       const outcome = res[0]?.result;
       if (outcome?.success) { done++; await logAction({ action: 'enable', section, name: outcome.name }); } else { errors++; }
       updateDisableProgress(done + errors, total);
@@ -201,15 +181,12 @@ deleteBtn.addEventListener('click', async () => {
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-  const countResult = await chrome.scripting.executeScript({
-    target: { tabId: tab.id }, world: 'MAIN',
-    func: getLiveBlockCountsForSections, args: [checked]
-  });
+  const countResult = await runInPage(tab.id, getLiveBlockCountsForSections, [checked]);
   const counts = countResult[0]?.result || {};
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
   if (total === 0) {
-    setDisableStatus('No live blocks found in selected sections.', 'warning');
+    setDisableStatus('No live blocks found in selected sections. In the new editor, open the page\'s Regions tab first.', 'warning');
     disableRunning = false;
     deleteBtn.disabled = false;
     disableBtn.disabled = false;
@@ -226,10 +203,7 @@ deleteBtn.addEventListener('click', async () => {
     const count = counts[section] || 0;
     for (let i = 0; i < count; i++) {
       if (disableStopRequested) break;
-      const res = await chrome.scripting.executeScript({
-        target: { tabId: tab.id }, world: 'MAIN',
-        func: deleteFirstLiveBlock, args: [section]
-      });
+      const res = await runInPage(tab.id, deleteFirstLiveBlock, [section]);
       const outcome = res[0]?.result;
       if (outcome?.success) { done++; await logAction({ action: 'delete', section, name: outcome.name, html: outcome.html }); } else { errors++; }
       updateDisableProgress(done + errors, total);
@@ -255,12 +229,7 @@ exportBtn.addEventListener('click', async () => {
   if (!checked.length) { setDisableStatus('Select at least one section.', 'warning'); return; }
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const result = await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    world: 'MAIN',
-    func: exportBlocksFromSections,
-    args: [checked]
-  });
+  const result = await runInPage(tab.id, exportBlocksFromSections, [checked]);
 
   const data = result[0]?.result || {};
   let totalBlocks = 0;
@@ -277,7 +246,7 @@ exportBtn.addEventListener('click', async () => {
     }
   }
 
-  if (!totalBlocks) { setDisableStatus('No blocks found in selected sections.', 'warning'); return; }
+  if (!totalBlocks) { setDisableStatus('No blocks found in selected sections. In the new editor, open the page\'s Regions tab first.', 'warning'); return; }
 
   const blob = new Blob([html.trim()], { type: 'text/html' });
   const url = URL.createObjectURL(blob);
@@ -316,7 +285,22 @@ imgSectionSelect.addEventListener('change', loadImageBlocks);
 imgRefreshBtn.addEventListener('click', () => { if (!imgZipRunning) loadImageBlocks(); });
 imgZipBtn.addEventListener('click', downloadBlockImages);
 
+async function runInPage(tabId, func, args = []) {
+  await chrome.scripting.executeScript({ target: { tabId }, world: 'MAIN', files: ['page-v2.js'] });
+  return chrome.scripting.executeScript({ target: { tabId }, world: 'MAIN', func, args });
+}
+
+function closeAnyModal() {
+  window.ecoV2?.closeModal();
+  document.querySelector('.modal.in button.close, .modal[style*="display: block"] button.close')?.click();
+}
+
 function exportBlocksFromSections(sectionNames) {
+  if (window.ecoV2?.active()) {
+    const result = {};
+    sectionNames.forEach(name => { const r = window.ecoV2.views(name); if (r.views?.length) result[name] = r.views; });
+    return result;
+  }
   function getViews(li) {
     for (const el of [...li.querySelectorAll('*')]) {
       const vk = Object.keys(el).find(k => k.startsWith('__vue'));
@@ -344,6 +328,11 @@ function exportBlocksFromSections(sectionNames) {
 }
 
 function getLiveBlockCountsForSections(sectionNames) {
+  if (window.ecoV2?.active()) {
+    const counts = {};
+    sectionNames.forEach(name => { counts[name] = (window.ecoV2.views(name).views || []).filter(v => !v.disabled).length; });
+    return counts;
+  }
   function getViews(li) {
     for (const el of [...li.querySelectorAll('*')]) {
       const vk = Object.keys(el).find(k => k.startsWith('__vue'));
@@ -369,6 +358,7 @@ function getLiveBlockCountsForSections(sectionNames) {
 }
 
 async function deleteFirstLiveBlock(sectionName) {
+  if (window.ecoV2?.active()) return window.ecoV2.deleteFirstLive(sectionName);
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
   function getViews(li) {
     for (const el of [...li.querySelectorAll('*')]) {
@@ -415,6 +405,11 @@ async function deleteFirstLiveBlock(sectionName) {
 }
 
 function getBlockCountsForSections(sectionNames) {
+  if (window.ecoV2?.active()) {
+    const counts = {};
+    sectionNames.forEach(name => { counts[name] = (window.ecoV2.views(name).views || []).length; });
+    return counts;
+  }
   const lis = [...document.querySelectorAll('ul.list-group > li.list-unstyled')];
   const counts = {};
   sectionNames.forEach(name => {
@@ -430,6 +425,7 @@ function getBlockCountsForSections(sectionNames) {
 }
 
 async function disableBlockAtIndex(sectionName, index) {
+  if (window.ecoV2?.active()) return window.ecoV2.setDisabled(sectionName, index, true);
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
   function getModal() { return document.querySelector('.modal.in, .modal[style*="display: block"], .modal[style*="display:block"]'); }
 
@@ -475,6 +471,7 @@ async function disableBlockAtIndex(sectionName, index) {
 }
 
 async function enableBlockAtIndex(sectionName, index) {
+  if (window.ecoV2?.active()) return window.ecoV2.setDisabled(sectionName, index, false);
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
   function getModal() { return document.querySelector('.modal.in, .modal[style*="display: block"], .modal[style*="display:block"]'); }
 
@@ -612,12 +609,7 @@ async function restoreLogEntry(id) {
   if (!confirm(`Re-add "${entry.name}" to ${entry.section}? This creates a new block with the saved HTML.`)) return;
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const result = await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    world: 'MAIN',
-    func: injectBlock,
-    args: [entry.name, entry.html, entry.section]
-  });
+  const result = await runInPage(tab.id, injectBlock, [entry.name, entry.html, entry.section]);
   const outcome = result[0]?.result;
   if (outcome?.success) {
     setDisableStatus(`Restored "${entry.name}" to ${entry.section}.`, 'success');
@@ -777,19 +769,14 @@ runBtn.addEventListener('click', async () => {
   for (let i = 0; i < blocks.length; i++) {
     if (stopRequested) { setStatus(`Stopped. ${doneCount} added.`, 'warning'); break; }
     const block = blocks[i];
-    await chrome.scripting.executeScript({ target: { tabId: tab.id }, world: 'MAIN', func: () => { document.querySelector('.modal.in button.close, .modal[style*="display: block"] button.close')?.click(); } }).catch(()=>{});
+    await runInPage(tab.id, closeAnyModal).catch(()=>{});
     await sleep(400);
     setBlockStatus(i, 'active');
     setStatus(`Adding block ${i + 1} of ${blocks.length}: "${block.name}"...`, 'info');
     document.getElementById('block-' + i)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
     try {
-      const result = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        world: "MAIN",
-        func: injectBlock,
-        args: [block.name, block.html, block.section]
-      });
+      const result = await runInPage(tab.id, injectBlock, [block.name, block.html, block.section]);
       const outcome = result[0]?.result;
       if (outcome?.success) {
         setBlockStatus(i, 'done');
@@ -799,7 +786,7 @@ runBtn.addEventListener('click', async () => {
         setBlockStatus(i, 'error');
         errorCount++;
         setStatus(`Error on block ${i + 1}: ${outcome?.error || 'unknown'}`, 'error');
-        await chrome.scripting.executeScript({ target: { tabId: tab.id }, world: 'MAIN', func: () => { document.querySelector('.modal.in button.close, .modal[style*="display: block"] button.close')?.click(); } });
+        await runInPage(tab.id, closeAnyModal);
         await sleep(600);
         if (!confirm(`Error on "${block.name}": ${outcome?.error}\n\nContinue with remaining blocks?`)) break;
       }
@@ -807,7 +794,7 @@ runBtn.addEventListener('click', async () => {
       setBlockStatus(i, 'error');
       errorCount++;
       setStatus(`Script error on block ${i + 1}: ${err.message}`, 'error');
-      await chrome.scripting.executeScript({ target: { tabId: tab.id }, world: 'MAIN', func: () => { document.querySelector('.modal.in button.close, .modal[style*="display: block"] button.close')?.click(); } });
+      await runInPage(tab.id, closeAnyModal);
         await sleep(600);
         if (!confirm(`Script error on "${block.name}". Continue?`)) break;
     }
@@ -826,12 +813,7 @@ runBtn.addEventListener('click', async () => {
     setStatus('Sorting blocks — live first, disabled last...', 'info');
     const usedSections = [...new Set(blocks.filter(b => b.status === 'done').map(b => b.section))];
     for (const section of usedSections) {
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        world: 'MAIN',
-        func: sortSectionBlocks,
-        args: [section]
-      });
+      await runInPage(tab.id, sortSectionBlocks, [section]);
       await sleep(800);
     }
   }
@@ -860,6 +842,7 @@ clearBtn.addEventListener('click', () => {
 });
 
 async function sortSectionBlocks(sectionName) {
+  if (window.ecoV2?.active()) return window.ecoV2.sortLiveFirst(sectionName);
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
   function getViewsComponent(li) {
@@ -902,6 +885,7 @@ async function sortSectionBlocks(sectionName) {
 }
 
 async function injectBlock(name, html, section) {
+  if (window.ecoV2?.active()) return window.ecoV2.add(section, name, html);
   function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
   function getModal() {
@@ -981,12 +965,7 @@ async function loadImageBlocks() {
   let error = '';
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    const result = await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      world: 'MAIN',
-      func: getSectionBlocks,
-      args: [section]
-    });
+    const result = await runInPage(tab.id, getSectionBlocks, [section]);
     const outcome = result[0]?.result;
     if (outcome?.error) error = outcome.error;
     else views = outcome?.views || [];
@@ -1012,17 +991,7 @@ function getSectionBlocks(sectionName) {
   const target = sectionName.toLowerCase();
   const toBlock = v => ({ name: v.name || v.file || '', html: v.html || '', disabled: !!Number(v.disabled) });
 
-  const regionsEl = document.querySelector('.eco-regions');
-  if (regionsEl) {
-    let vm = regionsEl.__vue__;
-    for (let d = 0; d < 12 && vm && !Array.isArray(vm.$data?.regions); d++) vm = vm.$parent;
-    const regions = vm?.$data?.regions;
-    if (!Array.isArray(regions)) return { error: 'Found the Regions card but couldn\'t read its data.' };
-    const region = regions.find(r => String(r.path || '').toLowerCase() === target);
-    if (!region) return { error: `This page has no "${sectionName}" region. Regions: ${regions.map(r => r.path).join(', ')}` };
-    return { views: (region.views || []).map(toBlock) };
-  }
-  if (document.body.classList.contains('eco-v2')) return { error: 'Open the page\'s Regions tab, wait for it to load, then click Refresh.' };
+  if (window.ecoV2?.active()) return window.ecoV2.views(sectionName);
 
   const headings = [...document.querySelectorAll('div.panel-heading')];
   const ownText = h => [...h.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join('').toLowerCase();
@@ -1222,12 +1191,7 @@ async function mapWithLimit(items, limit, fn) {
 async function offerZipOnPage(blob, filename) {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const base64 = await blobToBase64(blob);
-  const result = await chrome.scripting.executeScript({
-    target: { tabId: tab.id },
-    world: 'MAIN',
-    func: showZipSaveButton,
-    args: [base64, filename]
-  });
+  const result = await runInPage(tab.id, showZipSaveButton, [base64, filename]);
   return !!result[0]?.result;
 }
 

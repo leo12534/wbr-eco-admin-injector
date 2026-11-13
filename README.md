@@ -28,6 +28,7 @@ Paste a full HTML file and automatically split it into separate page_content blo
 ## Notes
 
 - Only works on `ecoadmin.wbresearch.com`
+- Works in both the classic and the v2 page editor. In v2, open the page's **Regions** tab first
 - Blocks are added to the **page_content** region
 - Auto-naming pulls the first `h1/h2/h3` heading inside each block
 - You can stop mid-run with the **Stop** button
@@ -44,6 +45,10 @@ Paste a full HTML file and automatically split it into separate page_content blo
 ---
 
 ## Changelog
+
+### 2026-11-13
+- All actions (Run all → CMS, Disable, Enable, Delete, Export, sorting and Restore) now work in the new v2 page editor as well as the classic one. In v2, open the page's **Regions** tab before using the extension.
+- v2 support lives in `page-v2.js`, which the popup loads into the page before each action. It uses the editor's own Add/Edit dialogs, delete and sort functions instead of clicking buttons.
 
 ### 2026-11-09
 - Added a **Download block images** panel (works in both the classic and the new v2 page editor): choose a section and block, and every image it references (jpg, png, svg, webp, gif, avif) is downloaded as a ZIP. Uses a bundled copy of JSZip 3.10.1 (`jszip.min.js`).
